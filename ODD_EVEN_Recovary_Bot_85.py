@@ -87,7 +87,7 @@ class DigitBot:
         self.recovery_win_count = 0
         self.last_digits_amount = []
         self.digit_count = 20
-        self.acceptable_precentage = 0.8
+        self.acceptable_precentage = 0.6
         self.digit_string = ""
         self.start = False
         self.checking_digit = None
