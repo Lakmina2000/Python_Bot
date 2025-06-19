@@ -960,11 +960,11 @@ async def get_user_config():
                 return [int(char) for char in sequence]
 
     # Get Even sequence
-    even_sequence = "1111111" #get_binary_sequence(f"Enter Recovery sequence for ODD-EVEN Recovary Trades: ")
+    even_sequence = [1, 1, 1, 1, 1, 1, 1] #get_binary_sequence(f"Enter Recovery sequence for ODD-EVEN Recovery Trades: ")
     print(f"EVEN Sequence: {even_sequence} with length: {len(even_sequence)}")
 
     # Get Odd sequence
-    odd_sequence = "0000000" #get_binary_sequence(f"Enter ODD sequence for ODD-EVEN Recovary Trades: ")
+    odd_sequence = [0, 0, 0, 0, 0, 0, 0] #get_binary_sequence(f"Enter ODD sequence for ODD-EVEN Recovary Trades: ")
     print(f"ODD Sequence: {odd_sequence} with length: {len(odd_sequence)}")
 
 
