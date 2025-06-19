@@ -222,7 +222,7 @@ class DigitBot:
                             posible_range = ((1 - (sum(self.prev_digits_1_0_overall) / len(self.prev_digits_1_0_overall))) - \
                                             (sum(self.prev_digits_1_0_overall) / len(self.prev_digits_1_0_overall))) * 100 
                             
-                            if self.even_precentage >= 0.8 and (posible_range >= 6) and len(self.prev_digits_1_0_overall) >= self.prev_digits_1_0_overall_length:
+                            if self.even_precentage >= 0.6 and (posible_range >= 2) and len(self.prev_digits_1_0_overall) >= self.prev_digits_1_0_overall_length:
                                 if not self.trade_going:
                                     # This variable allows to trade after 100 digit analysis
                                     self.trade_allowed = True
@@ -233,7 +233,7 @@ class DigitBot:
                                     print(f"[{current_time}] EVEN Precentage for {self.digits_to_consider} digits is: {round((self.even_precentage * 100), 2)} %")
 
 
-                            elif self.even_precentage <= 0.2 and (posible_range <= -6) and len(self.prev_digits_1_0_overall) >= self.prev_digits_1_0_overall_length:
+                            elif self.even_precentage <= 0.4 and (posible_range <= -2) and len(self.prev_digits_1_0_overall) >= self.prev_digits_1_0_overall_length:
                                 if not self.trade_going:
                                     # This variable allows to trade after 100 digit analysis
                                     self.trade_allowed = True
