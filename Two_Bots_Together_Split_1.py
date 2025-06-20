@@ -80,8 +80,8 @@ class DigitBot:
         self.prev_digits_count_trade_type_1 = 2
         self.numbers_list_trade_type_1 = [4, 5]
         self.martingale_stake_number = 0
-        self.martingale_stake_list = [0.4, 3.12, 19.98, 127.98]
-        self.martingale_weight_list = [3, 6, 12, 24]
+        self.martingale_stake_list = [0.6, 3.92, 0, 25.11, 46.36]
+        self.martingale_weight_list = [3, 6, 10, 24, 48]
         self.recovery_win_count = 0
 
 
@@ -227,7 +227,7 @@ class DigitBot:
                         elif self.mid_win:
                             print(f"[{current_time}] Last Digit: {self.last_digit}  |  Target: {self.current_target_digit}")
                         else:
-                            print(f"[{current_time}] Last Digit: {self.last_digit}")
+                            print(f"[{current_time}] Last Digit: {self.last_digit} | P/L: ${self.total_profit:+.2f}")
                         
                         # Process the digit for trading only if not in active trade
                         if not self.trade_active and self.not_first_time_recovary:
@@ -582,7 +582,15 @@ class DigitBot:
         try:
             # Round stake to 2 decimal places
             stake = round(self.current_stake, 2)
-            
+
+            if stake == 0.0:
+                self.profit_plus = 0
+                self.profit_minus = 0
+
+                if self.in_recovery_mode:
+                    self.trade_open = True
+    
+                return "success"   
             
             # Regular mode using over/under - both contracts in single proposal
             contract_type_over = "DIGITOVER"
