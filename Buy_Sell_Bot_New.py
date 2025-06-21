@@ -91,7 +91,7 @@ class CandleBot:
         self.max_total_loss = 0
         
         # Custom offset
-        self.offset = timedelta(hours=-5, minutes=-29, seconds=-59)
+        self.offset = timedelta(hours=-5, minutes=-30, seconds=-00)
         self.custom_time = dt.now() + self.offset
 
 
