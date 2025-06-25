@@ -67,7 +67,8 @@ class DigitBot:
                                     2.13, 2.42, 2.76, 3.14, 3.58,
                                     4.08, 4.65, 5.29, 6.03, 6.87,
                                     7.82, 8.91, 10.15, 11.56, 13.17,
-                                    15.00]
+                                    15.00, 17.08, 19.46, 22.16, 25.24,
+                                    28.74, 32.74, 37.28]
         self.current_stake = self.martingale_sequence[0]
         self.max_trade = 0
         self.max_gap = 0
