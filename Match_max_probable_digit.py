@@ -56,7 +56,7 @@ class DigitBot:
         self.digits_list_count = []
         self.max_prob_list = []
         self.max_prob_list_main = []
-        self.trade_treshold = 40
+        self.trade_treshold = 60
         self.trade_match_digit = -100
         self.martingal_trade_open = False
         self.martingale_trade_number = 0
