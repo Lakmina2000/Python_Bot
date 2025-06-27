@@ -545,7 +545,7 @@ class CandleBot:
             df['histogram'] = df['macd'] - df['signal']
             
             # Get the last two values for crossover detection
-            if len(df) < 2:
+            if len(df) < 3:
                 return None
                 
             macd_prev_2 = df['macd'].iloc[-3]
@@ -565,21 +565,21 @@ class CandleBot:
             tolerance = 0.05
             
             # Bullish crossover: MACD crosses above Signal
-            if (macd_prev <= signal_prev - tolerance) and (macd_now >= signal_now + tolerance):
+            if (macd_prev <= (signal_prev - tolerance)) and (macd_now >= (signal_now + tolerance)):
                 self.last_type_applied = "bullish"
                 print("✅ Bullish MACD crossover detected")
                 return "bullish"
             # Bearish crossover: MACD crosses below Signal  
-            elif (macd_prev >= signal_prev + tolerance) and (macd_now <= signal_now - tolerance):
+            elif (macd_prev >= (signal_prev + tolerance)) and (macd_now <= (signal_now - tolerance)):
                 self.last_type_applied = "bearish"
                 print("✅ Bearish MACD crossover detected")
                 return "bearish"
-            elif(macd_prev <= signal_prev_2 - tolerance) and (macd_now >= signal_now + tolerance):
+            elif(macd_prev <= (signal_prev_2 - tolerance)) and (macd_now >= (signal_now + tolerance)):
                 self.last_type_applied = "bullish"
                 print("✅ Bullish MACD crossover detected")
                 return "bullish"
             # Bearish crossover: MACD crosses below Signal  
-            elif (macd_prev >= signal_prev_2 + tolerance) and (macd_now <= signal_now - tolerance):
+            elif (macd_prev >= (signal_prev_2 + tolerance)) and (macd_now <= (signal_now - tolerance)):
                 self.last_type_applied = "bearish"
                 print("✅ Bearish MACD crossover detected")
                 return "bearish"
