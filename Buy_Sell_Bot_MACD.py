@@ -17,6 +17,8 @@ class CandleBot:
         self.current_stake = config["stake"]
         self.base_stake = config["stake"]  # Keep track of base stake
         self.martingale_stake_list = [0.8, 1.7, 3.54, 7.39, 15.3, 32.1, 66.34]
+                                  # [1, 1.42, 2.92, 5.99, 12.30, 25.25, 51.82]
+                                  # [1, 2.05, 4.21, 8.64, 17.73, 36.4, 74.71]
         self.martingale_trade_number = 0
         
         # Balance tracking
@@ -250,14 +252,12 @@ class CandleBot:
                             if trade_type == "bearish":
                                 self.trade_type_currect = trade_type
                                 await self.place_trade("bearish")
-                                return
                             
                             elif trade_type == "bullish":
                                 self.trade_type_currect = trade_type
                                 await self.place_trade("bullish")
-                                return
-                            
-                            await self.place_trade(trade_type_2)
+                            else:
+                                await self.place_trade(trade_type_2)
 
 
                 except asyncio.TimeoutError:
@@ -556,13 +556,13 @@ class CandleBot:
             signal_now = df['signal'].iloc[-1]
             
             # Enhanced debugging output
-            print(f"Before Previous - MACD: {macd_prev_2:.6f} | Signal: {signal_prev:.6f} | Histogram: {macd_prev - signal_prev:.6f}")
+            print(f"Before Previous - MACD: {macd_prev_2:.6f} | Signal: {signal_prev:.6f} | Histogram: {macd_prev_2 - signal_prev_2:.6f}")
             print(f"Previous - MACD: {macd_prev:.6f} | Signal: {signal_prev:.6f} | Histogram: {macd_prev - signal_prev:.6f}")
             print(f"Current  - MACD: {macd_now:.6f} | Signal: {signal_now:.6f} | Histogram: {macd_now - signal_now:.6f}")
             print(f"Close prices - Before Previous: {df['close'].iloc[-3]:.2f} | Previous: {df['close'].iloc[-2]:.2f} | Current: {df['close'].iloc[-1]:.2f}")
             
             # Check for crossover with small tolerance to avoid false signals from rounding
-            tolerance = 0.05
+            tolerance = 0
             
             # Bullish crossover: MACD crosses above Signal
             if (macd_prev <= (signal_prev - tolerance)) and (macd_now >= (signal_now + tolerance)):
@@ -574,14 +574,14 @@ class CandleBot:
                 self.last_type_applied = "bearish"
                 print("✅ Bearish MACD crossover detected")
                 return "bearish"
-            elif(macd_prev <= (signal_prev_2 - tolerance)) and (macd_now >= (signal_now + tolerance)):
+            elif(macd_prev_2 <= (signal_prev_2 - tolerance)) and (macd_now >= (signal_now + tolerance)):
                 self.last_type_applied = "bullish"
-                print("✅ Bullish MACD crossover detected")
+                print("✅ Bullish MACD within two candles crossover detected")
                 return "bullish"
             # Bearish crossover: MACD crosses below Signal  
-            elif (macd_prev >= (signal_prev_2 + tolerance)) and (macd_now <= (signal_now - tolerance)):
+            elif (macd_prev_2 >= (signal_prev_2 + tolerance)) and (macd_now <= (signal_now - tolerance)):
                 self.last_type_applied = "bearish"
-                print("✅ Bearish MACD crossover detected")
+                print("✅ Bearish MACD within two candles crossover detected")
                 return "bearish"
             else:
                 self.last_type_applied = None
