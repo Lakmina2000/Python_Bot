@@ -576,15 +576,6 @@ class CandleBot:
                     self.last_type_applied = "bearish"
                     print("✅ Bearish MACD crossover detected")
                     return "bearish"
-                elif(macd_prev_2 <= (signal_prev_2 - tolerance)) and (macd_now >= (signal_now + tolerance)):
-                    self.last_type_applied = "bullish"
-                    print("✅ Bullish MACD within two candles crossover detected")
-                    return "bullish"
-                # Bearish crossover: MACD crosses below Signal  
-                elif (macd_prev_2 >= (signal_prev_2 + tolerance)) and (macd_now <= (signal_now - tolerance)):
-                    self.last_type_applied = "bearish"
-                    print("✅ Bearish MACD within two candles crossover detected")
-                    return "bearish"
                 else:
                     self.last_type_applied = None
                     return None
