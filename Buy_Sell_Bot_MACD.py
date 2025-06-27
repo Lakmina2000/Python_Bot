@@ -81,13 +81,13 @@ class CandleBot:
 
         # Other variables 
         self.started = False
-        self.number_of_candles_check = 130
+        self.number_of_candles_check = 100
         self.rotate_constrants = False
         self.max_total_profit = 0
         self.max_total_loss = 0
         
         # Custom offset
-        self.offset = timedelta(hours=-5, minutes=-30, seconds=-0)
+        self.offset = timedelta(hours=-5, minutes=-30, seconds=0)
         self.custom_time = dt.now() + self.offset
 
 
@@ -189,7 +189,7 @@ class CandleBot:
             print("Requesting historical tick data...")
             await self.ws_trading.send(json.dumps({
                 "ticks_history": self.config["symbol"],
-                "count": 150 * 60,  # Assuming 1 tick per second approx, for 40 minutes
+                "count": 120 * 30,  # Assuming 1 tick per 2 second approx, for 40 minutes
                 "end": "latest",
                 "start": 1,
                 "style": "ticks"
@@ -295,11 +295,11 @@ class CandleBot:
             candles.append(candle)
 
         # Keep only last 40 candles
-        self.candle_history.extend(candles[-150:])
+        self.candle_history.extend(candles[-100:])
 
         # Print candles as UP or DOWN
         print("\nLast 40 Candles:")
-        for i, candle in enumerate(self.candle_history[-150:], 1):
+        for i, candle in enumerate(self.candle_history[-100:], 1):
             direction = "UP" if candle["close"] > candle["open"] else "DOWN" if candle["close"] < candle["open"] else "FLAT"
             print(f"Candle {i:>2}: {direction} | Open: {candle['open']} | Close: {candle['close']}")
 
@@ -747,7 +747,7 @@ async def get_user_config():
 
     # Get start time
     # Custom offset
-    offset = timedelta(hours=-5, minutes=-30, seconds=-0)
+    offset = timedelta(hours=-5, minutes=-30, seconds=0)
 
     # Apply the offset to current UTC time
     current_time = dt.now() + offset
