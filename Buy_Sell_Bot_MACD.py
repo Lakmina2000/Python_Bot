@@ -212,6 +212,7 @@ class CandleBot:
 
             # Step 4: Start real-time tick monitoring
             while self.running:
+                
                 try:
                     response = await asyncio.wait_for(self.ws_data.recv(), timeout=1.0)
                     data = json.loads(response)
