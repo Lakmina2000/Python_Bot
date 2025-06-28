@@ -88,29 +88,55 @@ class CandleBot:
         self.max_total_loss = 0
         
         # Custom offset
-        self.offset = timedelta(hours=-0, minutes=-0, seconds=-0)
+        self.offset = timedelta(hours=-5, minutes=-29, seconds=-59)
         self.custom_time = dt.now() + self.offset
 
 
+    # Add this improved authentication method to your CandleBot class
     async def connect_websockets(self):
-        """Establish all necessary WebSocket connections"""
+        """Establish all necessary WebSocket connections with improved error handling"""
         try:
             # Connect to main data websocket
-            self.ws_data = await websockets.connect(f"wss://ws.derivws.com/websockets/v3?app_id={self.config['app_id']}")
+            self.ws_data = await websockets.connect(
+                f"wss://ws.derivws.com/websockets/v3?app_id={self.config['app_id']}", 
+                ping_interval=20,
+                ping_timeout=10
+            )
             print("✓ Data WebSocket connected")
             
             # Connect to trading websocket
-            self.ws_trading = await websockets.connect(f"wss://ws.derivws.com/websockets/v3?app_id={self.config['app_id']}")
-            # Authenticate
-            auth_response = await self.send_and_receive(self.ws_trading, {
-                "authorize": self.config["api_token"]
-            })
+            self.ws_trading = await websockets.connect(
+                f"wss://ws.derivws.com/websockets/v3?app_id={self.config['app_id']}", 
+                ping_interval=20,
+                ping_timeout=10
+            )
             
-            if not auth_response or not auth_response.get("authorize"):
-                print("✗ Authentication failed")
+            # Authenticate with better error handling
+            print("Attempting authentication...")
+            auth_message = {
+                "authorize": self.config["api_token"].strip()  # Remove any whitespace
+            }
+            
+            auth_response = await self.send_and_receive(self.ws_trading, auth_message)
+            
+            # Enhanced error checking
+            if not auth_response:
+                print("✗ No response received from authentication request")
+                return False
+                
+            if "error" in auth_response:
+                error_info = auth_response["error"]
+                print(f"✗ Authentication error: {error_info.get('message', 'Unknown error')}")
+                print(f"  Error code: {error_info.get('code', 'N/A')}")
+                print(f"  Error details: {error_info.get('details', 'N/A')}")
+                return False
+                
+            if not auth_response.get("authorize"):
+                print("✗ Authentication failed - no authorize data in response")
+                print(f"Response received: {auth_response}")
                 return False
             
-            print(f"✓ Rise / Fall Trading WebSocket authenticated")
+            print(f"✓ Rise / Fall Trading WebSocket authenticated successfully")
             
             # Get account info
             authorize_data = auth_response.get("authorize", {})
@@ -126,25 +152,57 @@ class CandleBot:
             print(f"Currency: {self.currency}")
             print(f"Account - Initial Balance: ${self.initial_balance:.2f}")
             print(f"Account - LoginID: {authorize_data.get('loginid')}")
+            print(f"Account - Email: {authorize_data.get('email', 'N/A')}")
             
-            # Subscribe to ticks
-            await self.send_and_receive(self.ws_data, {
-                "ticks": self.config["symbol"],
-                "subscribe": 1  # Ensure we keep getting updates
+            # Test API permissions by getting account status
+            account_status = await self.send_and_receive(self.ws_trading, {
+                "get_account_status": 1
             })
             
+            if account_status and "get_account_status" in account_status:
+                status = account_status["get_account_status"]["status"]
+                print(f"Account Status: {status}")
+                
+                # Check if trading is allowed
+                if any(s in status for s in ["disabled", "locked", "suspended"]):
+                    print("⚠️ Warning: Account may have trading restrictions")
+            
+            # Subscribe to ticks
+            tick_response = await self.send_and_receive(self.ws_data, {
+                "ticks": self.config["symbol"],
+                "subscribe": 1
+            })
+            
+            if tick_response and "error" in tick_response:
+                print(f"✗ Error subscribing to ticks: {tick_response['error']['message']}")
+                return False
+                
+            print(f"✓ Subscribed to {self.config['symbol']} ticks")
             return True
             
+        except websockets.exceptions.ConnectionClosed as e:
+            print(f"✗ WebSocket connection closed: {e}")
+            return False
+        except websockets.exceptions.WebSocketException as e:
+            print(f"✗ WebSocket error: {e}")
+            return False
         except Exception as e:
-            print(f"Connection error: {e}")
+            print(f"✗ Connection error: {e}")
             return False
 
-    async def send_and_receive(self, websocket, message):
-        """Helper function to send messages and receive responses"""
+    # Also improve the send_and_receive method
+    async def send_and_receive(self, websocket, message, timeout=10):
+        """Helper function to send messages and receive responses with timeout"""
         try:
             await websocket.send(json.dumps(message))
-            response = await websocket.recv()
+            response = await asyncio.wait_for(websocket.recv(), timeout=timeout)
             return json.loads(response)
+        except asyncio.TimeoutError:
+            print(f"Timeout waiting for response to: {message}")
+            return None
+        except websockets.exceptions.ConnectionClosed:
+            print("WebSocket connection closed during communication")
+            return None
         except Exception as e:
             print(f"WebSocket communication error: {e}")
             return None
@@ -740,7 +798,7 @@ async def get_user_config():
 
     # Get start time
     # Custom offset
-    offset = timedelta(hours=-0, minutes=-0, seconds=-0)
+    offset = timedelta(hours=-5, minutes=-29, seconds=-59)
 
     # Apply the offset to current UTC time
     current_time = dt.now() + offset
