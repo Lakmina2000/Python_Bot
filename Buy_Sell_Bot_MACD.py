@@ -16,9 +16,10 @@ class CandleBot:
         # Bot trade state variables
         self.current_stake = config["stake"]
         self.base_stake = config["stake"]  # Keep track of base stake
-        self.martingale_stake_list = [0.8, 1.7, 3.54, 7.39, 15.3, 32.1, 66.34]
-                                  # [1, 1.42, 2.92, 5.99, 12.30, 25.25, 51.82]
-                                  # [1, 2.05, 4.21, 8.64, 17.73, 36.4, 74.71]
+        self.martingale_stake_list = [0.89, 1.86, 3.88, 8.1, 16.9, 35.27, 73.61] # --> Profit = 0.4
+                                    #[0.8, 1.7, 3.54, 7.39, 15.3, 32.1, 66.34] # --> Profit = 0.35
+                                    #[1, 2.05, 4.21, 8.64, 17.73, 36.4, 74.71] # --> Profit = 1.0
+
         self.martingale_trade_number = 0
         
         # Balance tracking
@@ -87,7 +88,7 @@ class CandleBot:
         self.max_total_loss = 0
         
         # Custom offset
-        self.offset = timedelta(hours=-5, minutes=-30, seconds=0)
+        self.offset = timedelta(hours=-5, minutes=-29, seconds=-59)
         self.custom_time = dt.now() + self.offset
 
 
@@ -548,22 +549,19 @@ class CandleBot:
             # Get the last two values for crossover detection
             if len(df) < 3:
                 return None
-                
-            macd_prev_2 = df['macd'].iloc[-3]
-            signal_prev_2 = df['signal'].iloc[-3]    
+               
             macd_prev = df['macd'].iloc[-2]
             signal_prev = df['signal'].iloc[-2]
             macd_now = df['macd'].iloc[-1]
             signal_now = df['signal'].iloc[-1]
             
             # Enhanced debugging output
-            print(f"Before Previous - MACD: {macd_prev_2:.6f} | Signal: {signal_prev:.6f} | Histogram: {macd_prev_2 - signal_prev_2:.6f}")
             print(f"Previous - MACD: {macd_prev:.6f} | Signal: {signal_prev:.6f} | Histogram: {macd_prev - signal_prev:.6f}")
             print(f"Current  - MACD: {macd_now:.6f} | Signal: {signal_now:.6f} | Histogram: {macd_now - signal_now:.6f}")
-            print(f"Close prices - Before Previous: {df['close'].iloc[-3]:.2f} | Previous: {df['close'].iloc[-2]:.2f} | Current: {df['close'].iloc[-1]:.2f}")
+            print(f"Close prices - Previous: {df['close'].iloc[-2]:.2f} | Current: {df['close'].iloc[-1]:.2f}")
             
             # Check for crossover with small tolerance to avoid false signals from rounding
-            tolerance = 0
+            tolerance = 0.02
             
             if self.martingale_trade_number < 4:
                 # Bullish crossover: MACD crosses above Signal
@@ -620,6 +618,9 @@ class CandleBot:
                     'close': self.candel_stop_price,
                     'type': self.candel_type
                 })
+
+                if len(self.candle_history) >= 200:
+                    self.candle_history.pop(0)
             
                 await self.check_trade_expiry(time_str)
         
@@ -729,7 +730,7 @@ async def get_user_config():
     # Validate normal stake input (positive float)
     while True:
         try:
-            normal_stake = float(input("Enter normal stake amount (default: 0.35): ") or 0.35)
+            normal_stake = float(input("Enter normal stake amount (default: 0.43): ") or 0.43)
             if normal_stake <= 0:
                 raise ValueError("Stake must be a positive number.")
             break
@@ -739,7 +740,7 @@ async def get_user_config():
 
     # Get start time
     # Custom offset
-    offset = timedelta(hours=-5, minutes=-30, seconds=0)
+    offset = timedelta(hours=-5, minutes=-29, seconds=-59)
 
     # Apply the offset to current UTC time
     current_time = dt.now() + offset
