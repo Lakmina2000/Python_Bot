@@ -88,7 +88,7 @@ class CandleBot:
         self.max_total_loss = 0
         
         # Custom offset
-        self.offset = timedelta(hours=-5, minutes=-29, seconds=-59)
+        self.offset = timedelta(hours=-5, minutes=-30, seconds=-0)
         self.custom_time = dt.now() + self.offset
 
 
@@ -740,7 +740,7 @@ async def get_user_config():
 
     # Get start time
     # Custom offset
-    offset = timedelta(hours=-5, minutes=-29, seconds=-59)
+    offset = timedelta(hours=-5, minutes=-30, seconds=-0)
 
     # Apply the offset to current UTC time
     current_time = dt.now() + offset
