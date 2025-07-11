@@ -56,7 +56,7 @@ class DigitBot:
         self.digits_list_count = []
         self.max_prob_list = []
         self.max_prob_list_main = []
-        self.trade_treshold = 60
+        self.trade_treshold = 40
         self.trade_match_digit = -100
         self.martingal_trade_open = False
         self.martingale_trade_number = 0
@@ -67,12 +67,12 @@ class DigitBot:
                                     2.13, 2.42, 2.76, 3.14, 3.58,
                                     4.08, 4.65, 5.29, 6.03, 6.87,
                                     7.82, 8.91, 10.15, 11.56, 13.17,
-                                    15.00, 17.08, 19.46, 22.16, 25.24,
-                                    28.74, 32.74, 37.28]
+                                    15.00, 17.08, 19.46] #, 22.16, 25.24, 28.74, 32.74, 37.28]
+        self.digits = []
         self.current_stake = self.martingale_sequence[0]
         self.max_trade = 0
         self.max_gap = 0
-        
+        self.pairs = [[False, 0], [False, 0], [False, 0], [False, 0], [False, 0], [False, 0], [False, 0], [False, 0], [False, 0], [False, 0]]
 
 
     async def connect_websockets(self):
@@ -168,41 +168,6 @@ class DigitBot:
         print("Starting tick monitoring...")
         
         try:
-            # Request historical tick data
-            print(f"Requesting {self.num_ticks} historical ticks...")
-            await self.ws_trading.send(json.dumps({
-                "ticks_history": self.symbol,
-                "count": self.num_ticks,
-                "end": "latest",
-                "start": 1,
-                "style": "ticks"
-            }))
-
-            tick_data = await self.ws_trading.recv()
-            tick_data = json.loads(tick_data)
-
-            if "error" in tick_data:
-                print(f"Error fetching ticks: {tick_data['error']['message']}")
-                return False
-
-            if "history" in tick_data:
-                prices = tick_data["history"]["prices"]
-                
-                # Extract last digits from prices (formatted to 3 decimal places)
-                self.digits = [int(f"{price:.3f}"[-1]) for price in prices]
-                
-                print(f"Successfully fetched {len(self.digits)} price points")
-
-                for i in range(10):
-                    digit_count = 0
-
-                    for digit in self.digits:
-                        if i == digit:
-                            digit_count += 1
-                    
-                    self.digits_list_count.append(digit_count)
-
-
             while self.running:
                 # Check for new tick data
                 try:
@@ -218,53 +183,27 @@ class DigitBot:
                         # Print tick with timestamp
                         current_time = dt.now().strftime("%H:%M:%S")
 
-                        excluded_digit = self.digits.pop(0)
                         self.digits.append(self.last_digit)
 
-                        self.digits_list_count[excluded_digit] -= 1
-                        self.digits_list_count[self.last_digit] += 1
-                        
-                        print(self.digits_list_count)
+                        if len(self.digits) >= 2:
+                            if self.pairs[self.digits[-1]][0] == True:
+                                self.pairs[self.digits[-1]][1] += 1
 
-                        max_prob = 0
-                        self.max_prob_list = []
-                        for i, count in enumerate(self.digits_list_count):
-                            if max_prob < (count / 10):
-                                self.max_prob_list = []
-                                self.max_prob_list.append([i, 0])
-                                max_prob = (count / 10)
+                            if self.digits[-2] == self.digits[-1]:
+                                self.pairs[self.digits[-1]][0] = True
+                                self.pairs[self.digits[-1]][1] = 0
 
-                            elif max_prob == (count / 10):
-                                self.max_prob_list.append([i, 0])
-
-                        incrementor = 0
-                        self.max_prob_list_main_demo = self.max_prob_list_main.copy()
-                        for past_max_probs_digits_and_occurances in self.max_prob_list_main_demo:
-                            if past_max_probs_digits_and_occurances[0] == self.last_digit:
-                                self.max_prob_list_main.pop(incrementor)
-                                incrementor -= 1
-
-                            else:   
-                                past_max_probs_digits_and_occurances[1] += 1
-                            
-                            if self.max_gap < past_max_probs_digits_and_occurances[1]:
-                                    self.max_gap = past_max_probs_digits_and_occurances[1]
-                            
-                            incrementor += 1
-
-                        for digits_and_occurances in self.max_prob_list:
-                            self.max_prob_list_main.append(digits_and_occurances)
-
-                        print(self.max_prob_list_main)
+                        print(self.pairs)
 
                         if self.trade_open:
                             if self.trade_match_digit == self.last_digit:
                                 self.result = "win"
                                 self.trade_open = False
-                                self.martingal_trade_open = False
+                                self.pairs[self.trade_match_digit][0] = False
 
                             else:
                                 self.result = "loss"
+                                self.trade_open = False
                                 self.martingal_trade_open = True
                         
                             await self.check_contract_result()
@@ -288,29 +227,27 @@ class DigitBot:
                         if time_difference < waiting_time:
                             print(f"[{time_now}] ........ Waiting for Trade ({waiting_time - time_difference:.1f} seconds)")
                         
-                        print(f"[{current_time}] Last Digit: {self.last_digit} | Total Profit: {round(self.total_profit, 2)} | Max Trade Number: {self.max_trade} | Max Gap: {self.max_gap}")
+                        print(f"[{current_time}] Last Digit: {self.last_digit} | Total Profit: {round(self.total_profit, 2)} | Max Trade Number: {self.max_trade} |")
                         print("--------------------------------------------------------------------------------------------")
 
 
-                        if (time_difference >= waiting_time) and ((not self.trade_open) or self.martingal_trade_open):
+                        if (time_difference >= waiting_time) and (not self.trade_open):
 
                             if not self.trade_open:
-                                for past_max_probs_digits_and_occurances in self.max_prob_list_main:
-                                    if past_max_probs_digits_and_occurances[1] >= self.trade_treshold:
-                                        print(f"✓ Target number found! .... Placing Match trade for {past_max_probs_digits_and_occurances[0]}...")
-                                        self.trade_active = True
-                                        self.trade_open = True
-                                        self.trade_match_digit = past_max_probs_digits_and_occurances[0]  
-                                        # Place trade
-                                        await self.place_trade()    
-                                        break 
-
-                            elif self.martingal_trade_open:    
-                                self.trade_active = True
-                                self.trade_open = True 
-                                # Place trade
-                                await self.place_trade()    
-
+                                max_individuals = 0
+                                selected_digit = 100
+                                for i in range(len(self.pairs)):
+                                    if (self.pairs[i][0] == True) and (self.pairs[i][1] > max_individuals):
+                                        max_individuals = self.pairs[i][1]
+                                        selected_digit = i
+                                
+                                if (selected_digit != 100) and (selected_digit == self.digits[-1]) and (max_individuals > 25):
+                                    print(f"✓ Target number found! .... Placing Match trade for {selected_digit}...")
+                                    self.trade_active = True
+                                    self.trade_open = True
+                                    self.trade_match_digit = selected_digit
+                                    # Place trade
+                                    await self.place_trade()
                         
                             
                 except asyncio.TimeoutError:
