@@ -241,7 +241,7 @@ class DigitBot:
                                         max_individuals = self.pairs[i][1]
                                         selected_digit = i
                                 
-                                if (selected_digit != 100) and (selected_digit == self.digits[-1]) and (max_individuals > 25):
+                                if (selected_digit != 100) and (selected_digit == self.digits[-1]) and (max_individuals > 30):
                                     print(f"✓ Target number found! .... Placing Match trade for {selected_digit}...")
                                     self.trade_active = True
                                     self.trade_open = True
